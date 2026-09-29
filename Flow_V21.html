@@ -225,7 +225,7 @@
 
 <script>
 const LINKS = {
-  "PRO_SAL_001": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo",
+  "PRO_SAL_001": "https://cksbvba678.sharepoint.com/sites/itgridpdm/SitePages/PRO_SAL_001_Leadgeneratie%20en%20prospectie.aspx",
   "PRO_SAL_002": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo/SitePages/PRO_SAL_002_Sales%20aanvragen%20voortraject.aspx",
   "PRO_SAL_003": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo/SitePages/PRO_SAL_003_Uitwerken%20basisofferte.aspx",
   "PRO_SAL_004": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo/SitePages/PRO_SAL_004_Uitwerken%20complexe%20offerte.aspx",
@@ -235,7 +235,7 @@ const LINKS = {
   "PRO_FOPS_003": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo/SitePages/PRO_FOPS_003_Projectoplevering.aspx",
   "PRO_FOPS_004": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo/SitePages/PRO_FOPS_004_Nazorg%20Project.aspx",
   "PRO_EE_001": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo/SitePages/PRO_EE_001_Electrical%20Engineering.aspx",
-  "PRO_SWE_001": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo",
+  "PRO_SWE_001": "https://cksbvba678.sharepoint.com/sites/itgridpdm/SitePages/PRO_SWE_001_Software%20Engineering.aspx",
   "P_PUR_001": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo/SitePages/PRO_SC_001_Bestellen-en-ontvangen-materiaal.aspx",
   "PRO_PAN_001": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo/SitePages/PRO_PAN_001_Projectopstart.aspx?",
   "PRO_PAN_002": "https://cksbvba678.sharepoint.com/sites/itgridpdmdemo/SitePages/PRO_PAN_002_E-plan%20Engineering.aspx",
@@ -335,7 +335,7 @@ function resetZoom(lvl) {
     zoomAt(lvl, e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP, px);
   }, { passive: false });
 
-  var dragging = false, startX = 0, startY = 0, startScrollLeft = 0, moved = 0;
+  var dragging = false, startX = 0, startY = 0, startScrollLeft = 0, moved = 0, pointerId = null;
 
   vp.addEventListener('pointerdown', function(e) {
     suppressClick = false;
@@ -344,19 +344,26 @@ function resetZoom(lvl) {
     dragging = true; moved = 0;
     startX = e.clientX; startY = e.clientY;
     startScrollLeft = vp.scrollLeft;
-    vp.classList.add('panning');
-    vp.setPointerCapture(e.pointerId);
+    pointerId = e.pointerId;
+    // pointer capture pas starten zodra er echt gesleept wordt (zie pointermove),
+    // anders wordt de click naar de viewport gestuurd i.p.v. naar de hotspot
   });
   vp.addEventListener('pointermove', function(e) {
     if (!dragging) return;
     var dx = e.clientX - startX, dy = e.clientY - startY;
     moved = Math.max(moved, Math.abs(dx), Math.abs(dy));
+    if (moved <= 4) return; // nog een klik, geen sleepbeweging
+    if (!vp.hasPointerCapture(pointerId)) {
+      vp.setPointerCapture(pointerId);
+      vp.classList.add('panning');
+    }
     vp.scrollLeft = startScrollLeft - dx;
   });
   function endDrag(e) {
     if (!dragging) return;
     dragging = false;
     vp.classList.remove('panning');
+    if (vp.hasPointerCapture(pointerId)) vp.releasePointerCapture(pointerId);
     if (moved > 4) suppressClick = true;
   }
   vp.addEventListener('pointerup', endDrag);
